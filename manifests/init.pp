@@ -38,6 +38,7 @@ class glassfish (
       logoutput   => true,
     }
 
+  }
 }
 
 
