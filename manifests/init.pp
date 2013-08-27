@@ -8,11 +8,13 @@ class glassfish (
   $installfile,
   $domain,
   $adminuser = 'admin',
-  $adminpassword,
+  $adminpass,
   $adminport = '4848',
   $httpport = '8080',
   $jdk,
   $nodes,
+  $user = 'glassfish',
+  $group = 'glassfish',
 ){
 
   #Install GF
@@ -20,21 +22,20 @@ class glassfish (
     if $installfile == undef {
       fail('glassfish needs installfile argument when using custom provider')
     }
-    #We are going to place a file out there to track the install w/o tracking the whole deal
-    file {"${target}/.glassfish_install":
-      ensure  => file,
-      content => 'PUPPET MANAGED: Remove this file to initiate a puppet reinstall',
-      mode    => '0644',
-      replace => false,
+    file {$target :
+      ensure => directory,
     }
     file {'/tmp/silent.txt':
       content => template('glassfish/silent.txt.erb'),
     }
     exec {'install_glassfish':
-      command     => "${installfile} -a /tmp/silent.txt -s",
+      command     => "${installfile} -j ${jdk} -a /tmp/silent.txt -s",
       path        => '/bin/:/usr/bin/',
-      subscribe   => File["/${target}/.glassfish_install"],
-      refreshonly => true,
+      creates     => "${target}/glassfish",
+      require     => File['/tmp/silent.txt'],
+      user        => $user,
+      group       => $group,
+      #refreshonly => true,
       logoutput   => true,
     }
 
