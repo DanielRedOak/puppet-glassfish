@@ -1,6 +1,15 @@
 #This requires java 6 or 7.  The install will not choose packages for you but will fail without an installation.
 #target - installation target
-#installfile - location of the install sh file. 
+#provider - currently the only available option is 'custom' which uses the .sh self-installer provided by $installfile
+#installfile - absolute path of the install sh file.
+#domain - the domain created at install time
+#asminuser - username of the administrator
+#adminpass - password of the adminuser
+#httpport - http port
+#jdk - absolute path to the jdk directory
+#nodes - used in the future for adding an array of nodes to the cluster
+#user - user that will own the install files.  Must already exist on the system
+#group - group that will own the install files.  Must already exist on the system
 
 class glassfish (
   $target = '/u01/glassfish',
