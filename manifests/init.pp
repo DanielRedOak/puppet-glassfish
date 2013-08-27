@@ -47,7 +47,9 @@ class glassfish (
       #refreshonly => true,
       logoutput   => true,
     }
-
+  }
+  else {
+    fail('you must specify a provider to install glassfish')
   }
 }
 
