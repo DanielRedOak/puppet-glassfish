@@ -14,8 +14,8 @@ define glassfish::cluster (
   $gfuser = 'glassfish',
   $cluster_name = $name,
   $instances,
-  $multicast_ip = ' ',
-  $multicast_port = ' ',
+  $multicast_ip,
+  $multicast_port,
   $is_das = false,
   $das_host,
   $das_port,
@@ -54,14 +54,14 @@ define glassfish::cluster (
     }
 
     if($multicast_ip and $multicast_port){
-      $multicastip_cmd = "--multicastip ${multicast_ip} --multicastport ${multicast_port}"
+      $multicastcmd = "--multicastip ${multicast_ip} --multicastport ${multicast_port}"
     }else{
-      $multicastip_cmd = ''
+      $multicastcmd = ''
       notify{"Multicast settings not completely specified. Using default multicast settings.":}
     }
     #Create the cluster
     exec {"create-cluster-${name}":
-      command => "${asadmin} create-cluster $multicaseipcmd --multicastport $multicast_port $cluster_name",
+      command => "${asadmin} create-cluster $multicastcmd $cluster_name",
       require => Exec["enable-secure-${name}"],
     }
 
