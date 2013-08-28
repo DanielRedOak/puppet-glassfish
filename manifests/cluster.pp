@@ -77,7 +77,7 @@ define glassfish::cluster (
     #Multimode asadmin file to create the instances on this 'node'
     file {"/tmp/cluster-${name}.gf":
       ensure   => file,
-      template => ('clustermm.erb'),
+      content => template('clustermm.erb'),
     }
 
     #Create the instances on this node using the generated template
