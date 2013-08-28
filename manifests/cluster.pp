@@ -53,10 +53,11 @@ define glassfish::cluster (
       require => Exec["start-domain-${name}"],
     }
 
-    if($multicast_ip){
-      $multicastip_cmd = "--multicastip ${multicast_ip}"
+    if($multicast_ip and $multicast_port){
+      $multicastip_cmd = "--multicastip ${multicast_ip} --multicastport ${multicast_port}"
     }else{
       $multicastip_cmd = ''
+      notify{"Multicast settings not completely specified. Using default multicast settings.":}
     }
     #Create the cluster
     exec {"create-cluster-${name}":
