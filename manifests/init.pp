@@ -7,7 +7,6 @@
 #adminpass - password of the adminuser
 #httpport - http port
 #jdk - absolute path to the jdk directory
-#nodes - used in the future for adding an array of nodes to the cluster
 #user - user that will own the install files.  Must already exist on the system
 #group - group that will own the install files.  Must already exist on the system
 
@@ -21,7 +20,6 @@ class glassfish (
   $adminport = '4848',
   $httpport = '8080',
   $jdk,
-  $nodes,
   $user = 'glassfish',
   $group = 'glassfish',
 ){
