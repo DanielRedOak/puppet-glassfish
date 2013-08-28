@@ -41,9 +41,23 @@ define glassfish::cluster (
       user    => "admin",
     }
   } else {
-    exec {"create-local-instance":
-      command => "${asadmin} --host ${das_host} ${das_port} create-local-instance $instance_name --cluster $cluster_name"
+    
+    file {'/tmp/multimode.gf':
+      ensure   => file,
+      template => ('multimode.erb'),
     }
+
+    exec {"create-local-instance":
+      require => File['/tmp/multimode.gf'],
+      command => "${asadmin} --host ${das_host} ${das_port} multimode --file /tmp/multimode.gf"
+    }
+
+    exec {"create-services":
+      require => Exec["create-local-instance"],
+      user    => 'root',
+      command => "${asadmin}",
+    }
+
   }
 }
 
