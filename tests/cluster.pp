@@ -4,5 +4,7 @@ glassfish::cluster {'test_cluster':
   is_das       => true,
   gfuser       => 'glassfish',
   cluster_name => 'testCluster',
+  das_host     => 'localhost',
+  das_port     => '4848',
 }
 
