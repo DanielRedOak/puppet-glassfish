@@ -96,11 +96,16 @@ define glassfish::cluster (
       command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf",
     }
 
+    file {"/tmp/service-${name}.gf":
+      ensure  => file,
+      content => template('glassfish/servicemm.erb'),
+    }
+
     #Create the services for these instances
     exec {"create-services-${name}":
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
-      command => "sh ${asadmin} create-service --serviceuser ${gfuser}",
+      command => "sh ${asadmin} multimode --file /tmp/.pw-${name}",
     }
 
   }
