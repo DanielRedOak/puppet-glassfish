@@ -105,7 +105,7 @@ define glassfish::cluster (
     exec {"create-services-${name}":
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
-      command => "sh ${asadmin} multimode --file /tmp/.pw-${name}",
+      command => "sh ${asadmin} multimode --file /tmp/service-${name}.gf",
     }
 
   }
