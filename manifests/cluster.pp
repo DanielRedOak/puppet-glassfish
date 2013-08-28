@@ -36,8 +36,9 @@ define glassfish::cluster (
 
 
   Exec {
-    provider => 'shell',
-    user     => $gfuser,
+    provider  => 'shell',
+    user      => $gfuser,
+    logoutput => true,
   }
 
   if($is_das){
