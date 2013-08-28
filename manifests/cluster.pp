@@ -8,6 +8,7 @@
 #is_das - boolean: is this going to be the das server
 #das_host - hostname or IP of the das server for this cluster
 #das_port - port the das admin runs on for this cluster
+#passfile - password file containing the das password information.  You can also add the needed information to the password file of the existing gfuser.  Usually found under /home/${gfuser}/.asadminpass
 
 define glassfish::cluster (
   $asadmin,
@@ -19,6 +20,8 @@ define glassfish::cluster (
   $is_das = false,
   $das_host,
   $das_port,
+  $das_user = 'admin',
+  $das_pass,
 ){
   
   #FLOW
@@ -77,13 +80,25 @@ define glassfish::cluster (
     #Multimode asadmin file to create the instances on this 'node'
     file {"/tmp/cluster-${name}.gf":
       ensure   => file,
-      content => template('clustermm.erb'),
+      content => template('glassfish/clustermm.erb'),
     }
 
+    file {"/tmp/.pw-${name}":
+      ensure  => file,
+      content => template('glassfish/pwd.erb'),
+      mode    => 0400,
+    }
     #Create the instances on this node using the generated template
     exec {"create-local-instance-${name}":
-      require => File['/tmp/cluster-${name}.gf'],
-      command => "sh ${asadmin} --host ${das_host} ${das_port} multimode --file /tmp/multimode.gf"
+      require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]]
+      command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile ${das_pass} multimode --file /tmp/cluster-${name}.gf"
+    }
+
+    #Kill the password before we continue
+    file {"pw-die-${name}":
+      name    => "/tmp/.pw-${name}",
+      ensure  => absent,
+      require => Exec{"create-local-instance-${name}"],
     }
 
     #Create the services for these instances
