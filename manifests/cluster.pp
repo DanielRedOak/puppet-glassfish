@@ -52,14 +52,19 @@ define glassfish::cluster (
       command => "${asadmin} enable-secure-admin",
       require => Exec["start-domain-${name}"],
     }
-    
+
+    if($multicast_ip){
+      $multicastip_cmd = "--multicastip ${multicast_ip}"
+    }else{
+      $multicastip_cmd = ''
+    }
     #Create the cluster
-    #TODO Does this need to only be done on one node or all of them in the cluster? Nope
     exec {"create-cluster-${name}":
-      command => "${asadmin} create-cluster --multicastaddress $multicase_ip --multicastport $multicast_port $cluster_name",
+      command => "${asadmin} create-cluster $multicaseipcmd --multicastport $multicast_port $cluster_name",
       require => Exec["enable-secure-${name}"],
     }
 
+    #Create the services in init.d
     exec {"create-services-${name}":
       require  => Exec["create-cluster-${name}"],
       user     => 'root',
@@ -67,17 +72,20 @@ define glassfish::cluster (
     }
 
   } else {
-    
+
+    #Multimode asadmin file to create the instances on this 'node'
     file {"/tmp/cluster-${name}.gf":
       ensure   => file,
       template => ('clustermm.erb'),
     }
 
+    #Create the instances on this node using the generated template
     exec {"create-local-instance-${name}":
       require => File['/tmp/cluster-${name}.gf'],
       command => "sh ${asadmin} --host ${das_host} ${das_port} multimode --file /tmp/multimode.gf"
     }
 
+    #Create the services for these instances
     exec {"create-services-${name}":
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
