@@ -14,7 +14,7 @@ define glassfish::cluster (
   $gfuser = 'glassfish',
   $cluster_name = $name,
   $instances,
-  $multicast_ip ' ',
+  $multicast_ip = ' ',
   $multicast_port = ' ',
   $is_das = false,
   $das_host,
