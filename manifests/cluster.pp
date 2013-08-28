@@ -91,7 +91,7 @@ define glassfish::cluster (
     #Create the instances on this node using the generated template
     exec {"create-local-instance-${name}":
       require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]]
-      command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile ${das_pass} multimode --file /tmp/cluster-${name}.gf"
+      command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf"
     }
 
     #Kill the password before we continue
