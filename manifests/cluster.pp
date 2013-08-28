@@ -1,5 +1,4 @@
-#This is used for cluster administration
-
+#This defined type is used to create a cluster.  At present, a cluster name must be unique per puppet node it is applied to.  If this is not the case, resources will be declared twice with the same name and error.
 #asadmin - path to asadmin
 #cluster_name - name of the cluster
 #instances - array of instances to create
@@ -11,7 +10,7 @@
 
 define glassfish::cluster (
   $asadmin,
-  $cluster_name,
+  $cluster_name = $name,
   $instances,
   $multicast_ip,
   $multicast_port,
@@ -36,24 +35,31 @@ define glassfish::cluster (
   if($is_das){
     #Create the cluster
     #TODO Does this need to only be done on one node or all of them in the cluster? Nope
-    exec {"create-cluster-$name":
+    exec {"create-cluster-${name}":
       command => "${asadmin} create-cluster --multicastaddress $multicase_ip --multicastport $multicast_port $clustername",
-      user    => "admin",
-    }
-  } else {
-    
-    file {'/tmp/multimode.gf':
-      ensure   => file,
-      template => ('multimode.erb'),
+      user    => 'root',
     }
 
-    exec {"create-local-instance":
-      require => File['/tmp/multimode.gf'],
+    exec {"create-services-${name}":
+      require => Exec["create-cluster-${name}"],
+      user    => 'root',
+      command => "${asadmin}",
+    }
+
+  } else {
+    
+    file {"/tmp/cluster-${name}.gf":
+      ensure   => file,
+      template => ('clustermm.erb'),
+    }
+
+    exec {"create-local-instance-${name}":
+      require => File['/tmp/cluster-${name}.gf'],
       command => "${asadmin} --host ${das_host} ${das_port} multimode --file /tmp/multimode.gf"
     }
 
-    exec {"create-services":
-      require => Exec["create-local-instance"],
+    exec {"create-services-${name}":
+      require => Exec["create-local-instance-${name}"],
       user    => 'root',
       command => "${asadmin}",
     }
