@@ -86,19 +86,14 @@ define glassfish::cluster (
     file {"/tmp/.pw-${name}":
       ensure  => file,
       content => template('glassfish/pwd.erb'),
+      owner   => $gfuser,
+      group   => $gfuser,
       mode    => 0400,
     }
     #Create the instances on this node using the generated template
     exec {"create-local-instance-${name}":
-      require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]]
-      command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf"
-    }
-
-    #Kill the password before we continue
-    file {"pw-die-${name}":
-      name    => "/tmp/.pw-${name}",
-      ensure  => absent,
-      require => Exec{"create-local-instance-${name}"],
+      require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]],
+      command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf",
     }
 
     #Create the services for these instances
