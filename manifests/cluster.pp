@@ -57,7 +57,6 @@ define glassfish::cluster (
     #TODO Does this need to only be done on one node or all of them in the cluster? Nope
     exec {"create-cluster-${name}":
       command => "${asadmin} create-cluster --multicastaddress $multicase_ip --multicastport $multicast_port $clustername",
-      user    => 'root',
       require => Exec["enable-secure-${name}"],
     }
 
