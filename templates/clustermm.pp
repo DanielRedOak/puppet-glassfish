@@ -1,3 +1,3 @@
 <% @instances.each do |instance| -%>
-create-local-instance <% instance %> --cluster <% cluster_name %>
+create-local-instance --cluster <% cluster_name %> <% instance %>
 <% end -%>

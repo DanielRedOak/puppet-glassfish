@@ -1,5 +1,6 @@
 #This defined type is used to create a cluster.  At present, a cluster name must be unique per puppet node it is applied to.  If this is not the case, resources will be declared twice with the same name and error.
 #asadmin - path to asadmin
+#gfuser - user that owns the glassfish install.  This user will also be used when the services are created.
 #cluster_name - name of the cluster
 #instances - array of instances to create
 #multicast_ip - IP that Group Management Service (GMS) listens on for events
@@ -10,10 +11,11 @@
 
 define glassfish::cluster (
   $asadmin,
+  $gfuser = 'glassfish',
   $cluster_name = $name,
   $instances,
-  $multicast_ip,
-  $multicast_port,
+  $multicast_ip = ' ',
+  $multicast_port = ' ',
   $is_das = false,
   $das_host,
   $das_port,
@@ -32,18 +34,36 @@ define glassfish::cluster (
    #start local instance (get services on these guys!)
    #use template to generate multimode scripts for asadmin...
 
+
+  Exec {
+    provider => 'shell',
+    user     => $gfuser,
+  }
+
   if($is_das){
+    #Start the domain
+    exec {"start-domain-${name}":
+      command => "${asadmin} start-domain",
+    }
+
+    #Enable secure admin
+    exec {"enable-secure-${name}":
+      command => "${asadmin} enable-secure-admin",
+      require => Exec["start-domain-${name}"],
+    }
+    
     #Create the cluster
     #TODO Does this need to only be done on one node or all of them in the cluster? Nope
     exec {"create-cluster-${name}":
       command => "${asadmin} create-cluster --multicastaddress $multicase_ip --multicastport $multicast_port $clustername",
       user    => 'root',
+      require => Exec["enable-secure-${name}"],
     }
 
     exec {"create-services-${name}":
-      require => Exec["create-cluster-${name}"],
-      user    => 'root',
-      command => "${asadmin}",
+      require  => Exec["create-cluster-${name}"],
+      user     => 'root',
+      command  => "${asadmin}",
     }
 
   } else {
@@ -55,13 +75,13 @@ define glassfish::cluster (
 
     exec {"create-local-instance-${name}":
       require => File['/tmp/cluster-${name}.gf'],
-      command => "${asadmin} --host ${das_host} ${das_port} multimode --file /tmp/multimode.gf"
+      command => "sh ${asadmin} --host ${das_host} ${das_port} multimode --file /tmp/multimode.gf"
     }
 
     exec {"create-services-${name}":
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
-      command => "${asadmin}",
+      command => "sh ${asadmin} create-service --serviceuser ${gfuser}",
     }
 
   }
