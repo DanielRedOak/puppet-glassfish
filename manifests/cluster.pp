@@ -63,7 +63,7 @@ define glassfish::cluster (
     exec {"create-services-${name}":
       require  => Exec["create-cluster-${name}"],
       user     => 'root',
-      command  => "${asadmin}",
+      command  => "${asadmin} create-service --serviceuser ${gfuser}",
     }
 
   } else {
