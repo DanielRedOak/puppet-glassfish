@@ -31,6 +31,8 @@ class glassfish (
     }
     file {$target :
       ensure => directory,
+      group  => $group,
+      owner  => $user,
     }
     file {'/tmp/silent.txt':
       content => template('glassfish/silent.txt.erb'),
@@ -39,7 +41,7 @@ class glassfish (
       command     => "${installfile} -j ${jdk} -a /tmp/silent.txt -s",
       path        => '/bin/:/usr/bin/',
       creates     => "${target}/glassfish",
-      require     => File['/tmp/silent.txt'],
+      require     => [File['/tmp/silent.txt'], File[$target]],
       user        => $user,
       group       => $group,
       #refreshonly => true,
