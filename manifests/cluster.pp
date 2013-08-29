@@ -57,7 +57,7 @@ define glassfish::cluster (
     }
 
     if($multicast_ip and $multicast_port){
-      $multicastcmd = "--multicastip ${multicast_ip} --multicastport ${multicast_port}"
+      $multicastcmd = "--multicastaddress ${multicast_ip} --multicastport ${multicast_port}"
     }else{
       $multicastcmd = ''
       notify{"Multicast settings not completely specified. Using default multicast settings.":}
