@@ -59,7 +59,6 @@ define glassfish::cluster (
       #Create the cluster
       exec {"create-cluster-${name}":
         command => "${asadmin} create-cluster $multicastcmd $cluster_name",
-        require => Exec["enable-secure-${name}"],
         creates => "${gfbase}/domains/${gfdomain}/config/${cluster_name}-config",
       }
 
