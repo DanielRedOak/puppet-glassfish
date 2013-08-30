@@ -11,6 +11,8 @@
 #passfile - password file containing the das password information.  You can also add the needed information to the password file of the existing gfuser.  Usually found under /home/${gfuser}/.asadminpass
 
 define glassfish::cluster (
+  $gfbase,
+  $gfdomain = '',
   $asadmin,
   $gfuser = 'glassfish',
   $cluster_name = $name,
@@ -28,9 +30,6 @@ define glassfish::cluster (
   #Install GF on DAS host and nodes before this type is used
 
   #Is DAS?
-   #Start domain
-   #Enable secure admin
-   #Restart domain
    #create cluster with options
   #Else
    #create-local-instance with existing cluster
@@ -45,36 +44,31 @@ define glassfish::cluster (
   }
 
   if($is_das){
-    #Start the domain
-    exec {"start-domain-${name}":
-      command => "${asadmin} start-domain",
-    }
+    if($gfdomain){
+      fail('you must specify the GF domain if this is the DAS')
+    } else {
 
-    #Enable secure admin
-    exec {"enable-secure-${name}":
-      command => "${asadmin} enable-secure-admin",
-      require => Exec["start-domain-${name}"],
-    }
+      if($multicast_ip and $multicast_port){
+        $multicastcmd = "--multicastaddress ${multicast_ip} --multicastport ${multicast_port}"
+      }else{
+        $multicastcmd = ''
+        notify{"Multicast settings not completely specified. Using default multicast settings.":}
+      }
+      #Create the cluster
+      exec {"create-cluster-${name}":
+        command => "${asadmin} create-cluster $multicastcmd $cluster_name",
+        require => Exec["enable-secure-${name}"],
+        creates => "${gfbase}/domains/${gfdomain}/config/${cluster_name}-config",
+      }
 
-    if($multicast_ip and $multicast_port){
-      $multicastcmd = "--multicastaddress ${multicast_ip} --multicastport ${multicast_port}"
-    }else{
-      $multicastcmd = ''
-      notify{"Multicast settings not completely specified. Using default multicast settings.":}
+      #Create the services in init.d
+      exec {"create-services-${name}":
+        require => Exec["create-cluster-${name}"],
+        user    => 'root',
+        command => "${asadmin} create-service --serviceuser ${gfuser}",
+        creates => "/etc/init.d/Glassfish_{$gfdomain}",
+      }
     }
-    #Create the cluster
-    exec {"create-cluster-${name}":
-      command => "${asadmin} create-cluster $multicastcmd $cluster_name",
-      require => Exec["enable-secure-${name}"],
-    }
-
-    #Create the services in init.d
-    exec {"create-services-${name}":
-      require  => Exec["create-cluster-${name}"],
-      user     => 'root',
-      command  => "${asadmin} create-service --serviceuser ${gfuser}",
-    }
-
   } else {
 
     #Multimode asadmin file to create the instances on this 'node'
@@ -94,6 +88,7 @@ define glassfish::cluster (
     exec {"create-local-instance-${name}":
       require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]],
       command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf",
+      creates => "${gfbase}/glassfish/nodes/${::fqdn}/${instances}",
     }
 
     file {"/tmp/service-${name}.gf":
@@ -106,6 +101,7 @@ define glassfish::cluster (
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
       command => "sh ${asadmin} multimode --file /tmp/service-${name}.gf",
+      creates => "/etc/init.d/Glassfish_{$instances}",
     }
 
   }

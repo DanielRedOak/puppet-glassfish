@@ -22,7 +22,11 @@ class glassfish (
   $jdk,
   $user = 'glassfish',
   $group = 'glassfish',
+  $secureadmin = true,
+  $startdomain = true,
 ){
+
+  $asadmin = "${target}/glassfish/bin/asadmin"
 
   #Install GF
   if ($provider == 'custom') {
@@ -47,8 +51,29 @@ class glassfish (
       #refreshonly => true,
       logoutput   => true,
     }
-  }
-  else {
+
+    if ($startdomain) {
+      #start the domain
+      exec {"start-gfdomain":
+        command => "${asadmin} start-domain",
+        require => Exec['install_glassfish'],
+      } 
+    }
+    if ($startdomain and $secureadmin) {
+    #Enable secure admin
+      exec {"enable-secure-admin":
+       command => "${asadmin} enable-secure-admin",
+       require => Exec["start-gfdomain"],
+      }
+      exec {"restart-gfdomain":
+        command => "${asadmin} restart-domain",
+        require => Exec['enable-secure-admin'],
+      }
+    } else {
+      fail('the domain must be started to enable secure admin')
+    }
+
+  } else {
     fail('you must specify a provider to install glassfish')
   }
 }
