@@ -25,7 +25,9 @@ define glassfish::cluster (
   $das_user = 'admin',
   $das_pass,
 ){
-  
+
+  $instance_string = join(prefix($instances, "${gfbase}/glassfish/nodes/${::fqdn}/"), " ")
+  $service_string = join(prefix($instances, '/etc/init.d/GlassFish_'), " ")
   #FLOW
   #Install GF on DAS host and nodes before this type is used
 
@@ -88,7 +90,7 @@ define glassfish::cluster (
     exec {"create-local-instance-${name}":
       require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]],
       command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf",
-      creates => "${gfbase}/glassfish/nodes/${::fqdn}/${instances}",
+      unless  => "stat ${instance_string}"
     }
 
     file {"/tmp/service-${name}.gf":
@@ -101,7 +103,7 @@ define glassfish::cluster (
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
       command => "sh ${asadmin} multimode --file /tmp/service-${name}.gf",
-      creates => "/etc/init.d/Glassfish_{$instances}",
+      unless  => "stat ${service_string}",
     }
 
   }
