@@ -49,21 +49,24 @@ class glassfish (
       content => template('glassfish/silent.txt.erb'),
     }
     exec {'install_glassfish':
-      command     => "${installfile} -j ${jdk} -a /tmp/silent.txt -s",
-      path        => '/bin/:/usr/bin/',
-      creates     => "${target}/glassfish",
-      require     => [File['/tmp/silent.txt'], File[$target]],
-      user        => $user,
-      group       => $group,
+      command      => "${installfile} -j ${jdk} -a /tmp/silent.txt -s",
+      path         => '/bin/:/usr/bin/',
+      creates      => "${target}/glassfish",
+      require      => [File['/tmp/silent.txt'], File[$target]],
+      user         => $user,
+      group        => $group,
       #refreshonly => true,
-      logoutput   => true,
+      logoutput    => true,
+      notify       => Exec['start-gfdomain'],
     }
 
     if ($startdomain) {
       #start the domain
       exec {"start-gfdomain":
-        command => "${asadmin} start-domain",
-        require => Exec['install_glassfish'],
+        command     => "${asadmin} start-domain",
+        require     => Exec['install_glassfish'],
+        refreshonly => true,
+        notify      => Exec['enable-secure-admin'],
       } 
     }
     if ($startdomain and $secureadmin) {
@@ -71,10 +74,13 @@ class glassfish (
       exec {"enable-secure-admin":
        command     => "${asadmin} enable-secure-admin",
        require     => Exec["start-gfdomain"],
+       refreshonly => true,
+       notify      => Exec['restart-gfdomain'],
       }
       exec {"restart-gfdomain":
-        command => "${asadmin} restart-domain",
-        require => Exec['enable-secure-admin'],
+        command     => "${asadmin} restart-domain",
+        require     => Exec['enable-secure-admin'],
+        refreshonly => true,
       }
     } elsif ($secureadmin) {
       fail('the domain must be started to enable secure admin')
