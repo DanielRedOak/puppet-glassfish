@@ -69,9 +69,9 @@ class glassfish (
         command => "${asadmin} restart-domain",
         require => Exec['enable-secure-admin'],
       }
-    } else {
+    } elsif ($secureadmin) {
       fail('the domain must be started to enable secure admin')
-    }
+    } 
 
   } else {
     fail('you must specify a provider to install glassfish')
