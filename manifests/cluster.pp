@@ -46,7 +46,7 @@ define glassfish::cluster (
   }
 
   if($is_das){
-    if($gfdomain){
+    if(!$gfdomain){
       fail('you must specify the GF domain if this is the DAS')
     } else {
 
@@ -67,7 +67,7 @@ define glassfish::cluster (
         require => Exec["create-cluster-${name}"],
         user    => 'root',
         command => "${asadmin} create-service --serviceuser ${gfuser}",
-        creates => "/etc/init.d/Glassfish_{$gfdomain}",
+        creates => "/etc/init.d/Glassfish_${gfdomain}",
       }
     }
   } else {
