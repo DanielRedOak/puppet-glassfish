@@ -59,7 +59,7 @@ define glassfish::cluster (
       #Create the cluster
       exec {"create-cluster-${name}":
         command => "${asadmin} create-cluster $multicastcmd $cluster_name",
-        creates => "${gfbase}/domains/${gfdomain}/config/${cluster_name}-config",
+        creates => "${gfbase}/glassfish/domains/${gfdomain}/config/${cluster_name}-config",
       }
 
       #Create the services in init.d
@@ -67,7 +67,7 @@ define glassfish::cluster (
         require => Exec["create-cluster-${name}"],
         user    => 'root',
         command => "${asadmin} create-service --serviceuser ${gfuser}",
-        creates => "/etc/init.d/Glassfish_${gfdomain}",
+        creates => "/etc/init.d/GlassFish_${gfdomain}",
       }
     }
   } else {
