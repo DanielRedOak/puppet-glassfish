@@ -57,7 +57,6 @@ class glassfish (
       group        => $group,
       #refreshonly => true,
       logoutput    => true,
-      notify       => Exec['start-gfdomain'],
     }
 
     if ($startdomain) {
@@ -66,7 +65,7 @@ class glassfish (
         command     => "${asadmin} start-domain",
         require     => Exec['install_glassfish'],
         refreshonly => true,
-        notify      => Exec['enable-secure-admin'],
+        notify      => Exec["enable-secure-admin"],
       } 
     }
     if ($startdomain and $secureadmin) {
