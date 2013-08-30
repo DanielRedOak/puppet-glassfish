@@ -28,6 +28,13 @@ class glassfish (
 
   $asadmin = "${target}/glassfish/bin/asadmin"
 
+  Exec {
+   provider  => 'shell',
+   user      => $user,
+   logoutput => true,
+  }
+
+
   #Install GF
   if ($provider == 'custom') {
     if $installfile == undef {
@@ -62,8 +69,8 @@ class glassfish (
     if ($startdomain and $secureadmin) {
     #Enable secure admin
       exec {"enable-secure-admin":
-       command => "${asadmin} enable-secure-admin",
-       require => Exec["start-gfdomain"],
+       command     => "${asadmin} enable-secure-admin",
+       require     => Exec["start-gfdomain"],
       }
       exec {"restart-gfdomain":
         command => "${asadmin} restart-domain",
