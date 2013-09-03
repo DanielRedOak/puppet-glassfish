@@ -26,21 +26,18 @@ Install Glassfish using a provided linux sh installer
       jdk         => '/u01/java',
       user        => 'glassfish',
       group       => 'glassfish',
-      secureadmin => true,
-      startdomain => true,
     }
 
 Create the Glassfish DAS setup and create the cluster.  If multicast_ip and multicast_port are not specified, Glassfish will choose them for you.
 
     glassfish::cluster {'test_cluster':
-      gfbase       => '/u01/glassfish',
-      gfdomain     => 'domain1',
       asadmin      => '/u01/glassfish/glassfish/bin/asadmin',
       is_das       => true,
       gfuser       => 'glassfish',
       cluster_name => 'testCluster',
       das_host     => 'localhost',
       das_port     => '4848',
+      das_user     => 'admin',
       das_pass     => 'password',
 }
 
@@ -48,14 +45,13 @@ Create the Glassfish DAS setup and create the cluster.  If multicast_ip and mult
 Create local-instances on a node and add it to the cluster 'testCluster'.
 
     glassfish::cluster {'test_cluster':
-      gfbase       => '/u01/glassfish',
-      gfdomain     => 'domain1',
       asadmin      => '/u01/glassfish/glassfish/bin/asadmin',
       instances    => ['instance1', 'instance2'],
       gfuser       => 'glassfish',
       cluster_name => 'testCluster',
       das_host     => '172.16.225.135',
       das_port     => '4848',
+      das_user     => 'admin',
       das_pass     => 'helloworld',
       multicast_ip => '228.9.242.21',
       multicast_port => '27745',

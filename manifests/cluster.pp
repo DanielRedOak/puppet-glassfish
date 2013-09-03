@@ -1,6 +1,4 @@
 #This defined type is used to create a cluster.  At present, a cluster name must be unique per puppet node it is applied to.  If this is not the case, resources will be declared twice with the same name and error.
-#gfbase - path to the base gf install
-#gfdomain - glassfish domain
 #asadmin - path to asadmin
 #gfuser - user that owns the glassfish install.  This user will also be used when the services are created.
 #cluster_name - name of the cluster
@@ -10,11 +8,9 @@
 #is_das - boolean: is this going to be the das server
 #das_host - hostname or IP of the das server for this cluster
 #das_port - port the das admin runs on for this cluster
-#das_pass - pw of the admin user
+#passfile - password file containing the das password information.  You can also add the needed information to the password file of the existing gfuser.  Usually found under /home/${gfuser}/.asadminpass
 
 define glassfish::cluster (
-  $gfbase,
-  $gfdomain = '',
   $asadmin,
   $gfuser = 'glassfish',
   $cluster_name = $name,
@@ -27,13 +23,14 @@ define glassfish::cluster (
   $das_user = 'admin',
   $das_pass,
 ){
-
-  $instance_string = join(prefix($instances, "${gfbase}/glassfish/nodes/${::fqdn}/"), " ")
-  $service_string = join(prefix($instances, '/etc/init.d/GlassFish_'), " ")
+  
   #FLOW
   #Install GF on DAS host and nodes before this type is used
 
   #Is DAS?
+   #Start domain
+   #Enable secure admin
+   #Restart domain
    #create cluster with options
   #Else
    #create-local-instance with existing cluster
@@ -48,30 +45,36 @@ define glassfish::cluster (
   }
 
   if($is_das){
-    if(!$gfdomain){
-      fail('you must specify the GF domain if this is the DAS')
-    } else {
-
-      if($multicast_ip and $multicast_port){
-        $multicastcmd = "--multicastaddress ${multicast_ip} --multicastport ${multicast_port}"
-      }else{
-        $multicastcmd = ''
-        notify{"Multicast settings not completely specified. Using default multicast settings.":}
-      }
-      #Create the cluster
-      exec {"create-cluster-${name}":
-        command => "${asadmin} create-cluster $multicastcmd $cluster_name",
-        creates => "${gfbase}/glassfish/domains/${gfdomain}/config/${cluster_name}-config",
-      }
-
-      #Create the services in init.d
-      exec {"create-services-${name}":
-        require => Exec["create-cluster-${name}"],
-        user    => 'root',
-        command => "${asadmin} create-service --serviceuser ${gfuser}",
-        creates => "/etc/init.d/GlassFish_${gfdomain}",
-      }
+    #Start the domain
+    exec {"start-domain-${name}":
+      command => "${asadmin} start-domain",
     }
+
+    #Enable secure admin
+    exec {"enable-secure-${name}":
+      command => "${asadmin} enable-secure-admin",
+      require => Exec["start-domain-${name}"],
+    }
+
+    if($multicast_ip and $multicast_port){
+      $multicastcmd = "--multicastip ${multicast_ip} --multicastport ${multicast_port}"
+    }else{
+      $multicastcmd = ''
+      notify{"Multicast settings not completely specified. Using default multicast settings.":}
+    }
+    #Create the cluster
+    exec {"create-cluster-${name}":
+      command => "${asadmin} create-cluster $multicastcmd $cluster_name",
+      require => Exec["enable-secure-${name}"],
+    }
+
+    #Create the services in init.d
+    exec {"create-services-${name}":
+      require  => Exec["create-cluster-${name}"],
+      user     => 'root',
+      command  => "${asadmin} create-service --serviceuser ${gfuser}",
+    }
+
   } else {
 
     #Multimode asadmin file to create the instances on this 'node'
@@ -91,7 +94,6 @@ define glassfish::cluster (
     exec {"create-local-instance-${name}":
       require => [File["/tmp/cluster-${name}.gf"], File["/tmp/.pw-${name}"]],
       command => "sh ${asadmin} --host ${das_host} --port ${das_port} --user ${das_user} --passwordfile /tmp/.pw-${name} multimode --file /tmp/cluster-${name}.gf",
-      unless  => "stat ${instance_string}"
     }
 
     file {"/tmp/service-${name}.gf":
@@ -104,7 +106,6 @@ define glassfish::cluster (
       require => Exec["create-local-instance-${name}"],
       user    => 'root',
       command => "sh ${asadmin} multimode --file /tmp/service-${name}.gf",
-      unless  => "stat ${service_string}",
     }
 
   }

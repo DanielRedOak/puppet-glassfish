@@ -9,8 +9,6 @@
 #jdk - absolute path to the jdk directory
 #user - user that will own the install files.  Must already exist on the system
 #group - group that will own the install files.  Must already exist on the system
-#secureadmin - enable secure admin
-#startdomain - start domain when finished
 
 class glassfish (
   $target = '/u01/glassfish',
@@ -24,18 +22,7 @@ class glassfish (
   $jdk,
   $user = 'glassfish',
   $group = 'glassfish',
-  $secureadmin = true,
-  $startdomain = true,
 ){
-
-  $asadmin = "${target}/glassfish/bin/asadmin"
-
-  Exec {
-   provider  => 'shell',
-   user      => $user,
-   logoutput => true,
-  }
-
 
   #Install GF
   if ($provider == 'custom') {
@@ -44,50 +31,22 @@ class glassfish (
     }
     file {$target :
       ensure => directory,
-      group  => $group,
-      owner  => $user,
     }
     file {'/tmp/silent.txt':
       content => template('glassfish/silent.txt.erb'),
     }
     exec {'install_glassfish':
-      command      => "${installfile} -j ${jdk} -a /tmp/silent.txt -s",
-      path         => '/bin/:/usr/bin/',
-      creates      => "${target}/glassfish",
-      require      => [File['/tmp/silent.txt'], File[$target]],
-      user         => $user,
-      group        => $group,
+      command     => "${installfile} -j ${jdk} -a /tmp/silent.txt -s",
+      path        => '/bin/:/usr/bin/',
+      creates     => "${target}/glassfish",
+      require     => File['/tmp/silent.txt'],
+      user        => $user,
+      group       => $group,
       #refreshonly => true,
-      logoutput    => true,
+      logoutput   => true,
     }
-
-    if ($startdomain) {
-      #start the domain
-      exec {"start-gfdomain":
-        command     => "${asadmin} start-domain",
-        require     => Exec['install_glassfish'],
-        refreshonly => true,
-        notify      => Exec["enable-secure-admin"],
-      } 
-    }
-    if ($startdomain and $secureadmin) {
-    #Enable secure admin
-      exec {"enable-secure-admin":
-       command     => "${asadmin} enable-secure-admin",
-       require     => Exec["start-gfdomain"],
-       refreshonly => true,
-       notify      => Exec['restart-gfdomain'],
-      }
-      exec {"restart-gfdomain":
-        command     => "${asadmin} restart-domain",
-        require     => Exec['enable-secure-admin'],
-        refreshonly => true,
-      }
-    } elsif ($secureadmin) {
-      fail('the domain must be started to enable secure admin')
-    } 
-
-  } else {
+  }
+  else {
     fail('you must specify a provider to install glassfish')
   }
 }
