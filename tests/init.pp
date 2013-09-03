@@ -8,6 +8,6 @@ class {glassfish:
   adminport   => '4848',
   httpport    => '8080',
   jdk         => '/u01/java',
-  user        => 'glassfish',
-  group       => 'glassfish',
+  secureadmin => true,
+  startdomain => true,
 }
