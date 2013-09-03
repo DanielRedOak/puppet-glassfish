@@ -9,6 +9,8 @@
 #jdk - absolute path to the jdk directory
 #user - user that will own the install files.  Must already exist on the system
 #group - group that will own the install files.  Must already exist on the system
+#secureadmin - enable secure admin
+#startdomain - start domain when finished
 
 class glassfish (
   $target = '/u01/glassfish',
