@@ -1,6 +1,4 @@
 #This defined type is used to create a cluster.  At present, a cluster name must be unique per puppet node it is applied to.  If this is not the case, resources will be declared twice with the same name and error.
-#gfbase - path to the base gf install
-#gfdomain - glassfish domain
 #asadmin - path to asadmin
 #gfuser - user that owns the glassfish install.  This user will also be used when the services are created.
 #cluster_name - name of the cluster
@@ -10,7 +8,7 @@
 #is_das - boolean: is this going to be the das server
 #das_host - hostname or IP of the das server for this cluster
 #das_port - port the das admin runs on for this cluster
-#das_pass - pw of the admin user
+#passfile - password file containing the das password information.  You can also add the needed information to the password file of the existing gfuser.  Usually found under /home/${gfuser}/.asadminpass
 
 define glassfish::cluster (
   $gfbase,
