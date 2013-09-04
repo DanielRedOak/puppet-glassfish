@@ -64,6 +64,7 @@ class glassfish (
       exec {"start-gfdomain":
         command     => "${asadmin} start-domain",
         require     => Exec['install_glassfish'],
+        subscriber  => Exec['install_glassfish'],
         refreshonly => true,
         notify      => Exec["enable-secure-admin"],
       } 
